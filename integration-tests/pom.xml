@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.jtigp</groupId>
+    <artifactId>int-tests</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+
+        <!-- don't need to a jar file for the tests, they will be run locally -->
+        <maven.install.skip>true</maven.install.skip>
+
+        <server.classes>../server/target/classes</server.classes>
+        <server.sources>../server/src/main/java</server.sources>
+
+
+        <mms-main.classes>../multi-module-server/target/classes</mms-main.classes>
+        <mms-main.sources>../multi-module-server/src/main/java</mms-main.sources>
+        <mms-persistence.classes>../multi-module-server/modules/mms-persistence/target/classes</mms-persistence.classes>
+        <mms-persistence.sources>../multi-module-server/modules/mms-persistence/src/main/java</mms-persistence.sources>
+        <mms-web.classes>../multi-module-server/modules/mms-web/target/classes</mms-web.classes>
+        <mms-web.sources>../multi-module-server/modules/mms-web/src/main/java</mms-web.sources>
+    </properties>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.5.9.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <dependencies>
+        <!-- test deps -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>info.cukes</groupId>
+            <artifactId>cucumber-junit</artifactId>
+            <version>1.2.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>info.cukes</groupId>
+            <artifactId>cucumber-spring</artifactId>
+            <version>1.2.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
+    </dependencies>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <!-- Copy the ant tasks jar. Needed for ts.jacoco.report-ant . -->
+                    <execution>
+                        <id>jacoco-dependency-ant</id>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <phase>process-test-resources</phase>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.jacoco</groupId>
+                                    <artifactId>org.jacoco.ant</artifactId>
+                                    <version>0.8.0</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jacoco</groupId>
+                                    <artifactId>org.jacoco.report</artifactId>
+                                    <version>0.8.0</version>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jacoco</groupId>
+                                    <artifactId>org.jacoco.core</artifactId>
+                                    <version>0.8.0</version>
+                                </artifactItem>
+                            </artifactItems>
+                            <stripVersion>true</stripVersion>
+                            <outputDirectory>${basedir}/target/jacoco-jars</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.0</version>
+                <executions>
+                    <execution>
+                        <id>pre-test</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <propertyName>surefireArgLine</propertyName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>post-test-dump</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>dump</goal>
+                        </goals>
+                        <configuration>
+                            <address>localhost</address>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    <profiles>
+        <profile>
+            <id>one</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>post-test-report</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <taskdef name="report" classname="org.jacoco.ant.ReportTask">
+                                            <classpath path="${basedir}/target/jacoco-jars/org.jacoco.ant.jar"/>
+                                        </taskdef>
+                                        <mkdir dir="${basedir}/target/coverage-report"/>
+                                        <report>
+                                            <executiondata>
+                                                <fileset dir="${build.directory}">
+                                                    <include name="jacoco.exec"/>
+                                                </fileset>
+                                            </executiondata>
+                                            <structure name="Integration Test Coverage Project">
+                                                <group name="Server">
+                                                    <classfiles>
+                                                        <fileset dir="${server.classes}"/>
+                                                    </classfiles>
+                                                    <sourcefiles encoding="UTF-8">
+                                                        <fileset dir="${server.sources}"/>
+                                                    </sourcefiles>
+                                                </group>
+                                            </structure>
+                                            <html destdir="${basedir}/target/coverage-report/html"/>
+                                            <xml destfile="${basedir}/target/coverage-report/coverage-report.xml"/>
+                                            <csv destfile="${basedir}/target/coverage-report/coverage-report.csv"/>
+                                        </report>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.jacoco</groupId>
+                                <artifactId>org.jacoco.ant</artifactId>
+                                <version>0.8.0</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>multi</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>post-test-report</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <taskdef name="report" classname="org.jacoco.ant.ReportTask">
+                                            <classpath path="${basedir}/target/jacoco-jars/org.jacoco.ant.jar"/>
+                                        </taskdef>
+                                        <mkdir dir="${basedir}/target/coverage-report"/>
+                                        <report>
+                                            <executiondata>
+                                                <fileset dir="${build.directory}">
+                                                    <include name="jacoco.exec"/>
+                                                </fileset>
+                                            </executiondata>
+                                            <structure name="Integration Test Coverage Multi-Maven Project">
+                                                <group name="Server">
+                                                    <classfiles>
+                                                        <fileset dir="${mms-main.classes}"/>
+                                                        <fileset dir="${mms-persistence.classes}"/>
+                                                        <fileset dir="${mms-web.classes}"/>
+                                                    </classfiles>
+
+                                                    <sourcefiles encoding="UTF-8">
+                                                        <fileset dir="${mms-main.sources}"/>
+                                                        <fileset dir="${mms-persistence.sources}"/>
+                                                        <fileset dir="${mms-web.sources}"/>
+                                                    </sourcefiles>
+
+                                                </group>
+                                            </structure>
+                                            <html destdir="${basedir}/target/coverage-report/html"/>
+                                            <xml destfile="${basedir}/target/coverage-report/coverage-report.xml"/>
+                                            <csv destfile="${basedir}/target/coverage-report/coverage-report.csv"/>
+                                        </report>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.jacoco</groupId>
+                                <artifactId>org.jacoco.ant</artifactId>
+                                <version>0.8.0</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

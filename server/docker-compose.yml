@@ -1,0 +1,27 @@
+version: '2.2'
+
+services:
+
+  db:
+    image: postgres:9.6.7
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 1s
+      timeout: 10s
+      retries: 60
+
+  myserver:
+    image: jtigp-server
+    build:
+      context: ./
+      dockerfile: src/main/docker/Dockerfile
+    ports:
+      - 8080:8080
+      - 6300:6300
+    depends_on:
+      db:
+        condition: service_healthy
+    links:
+      - "db"

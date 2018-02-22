@@ -1,0 +1,21 @@
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/
+    username: postgres
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: create-drop
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
+    properties:
+      hibernate:
+        format_sql: true
+
+
+---
+spring:
+  profiles: docker
+  datasource:
+    url: jdbc:postgresql://db:5432/
